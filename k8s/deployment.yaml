@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lojas-webapp
+  labels:
+    app: lojas-webapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: lojas-webapp
+  template:
+    metadata:
+      labels:
+        app: lojas-webapp
+    spec:
+      containers:
+      - name: webapp
+        image: lbf78/lojas:v1   # Ou o caminho da imagem no seu Registry
+        ports:
+        - containerPort: 80
+        env:
+        - name: DB_DIALECT
+          value: "mysql"
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: lojas-config
+              key: DB_HOST
+        - name: DB_NAME
+          value: "fiestadb"
+        - name: DB_USER
+          value: "root"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: lojas-secret
+              key: DB_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lojas-service
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: lojas-webapp 
